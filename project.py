@@ -1,5 +1,15 @@
-from flask import Flask, render_template, request, redirect, jsonify, url_for, flash, make_response, Markup, session as login_session
+import os
+from flask import Flask, render_template, request, redirect, jsonify, url_for, flash, make_response, Markup, session as login_session, send_from_directory
+from werkzeug import secure_filename
+
+#File Upload adapted from http://flask.pocoo.org/docs/0.10/patterns/fileuploads/
+# and http://stackoverflow.com/questions/30237504/flask-and-sqlalchemy-get-uploaded-file-using-path-stored-on-database
+UPLOAD_FOLDER = 'uploads'
+ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])
+
 app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024
 
 import random, string, httplib2, json, requests
 from oauth2client.client import flow_from_clientsecrets
@@ -8,6 +18,11 @@ from sqlalchemy import create_engine, asc
 from sqlalchemy.orm import sessionmaker
 from database_setup import Base, Restaurant, MenuItem, User
 
+
+# Allowed file extensions check function
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 #Connect to Database and create database session
 engine = create_engine('sqlite:///restaurantmenuwithusers.db')
@@ -327,6 +342,11 @@ def showRestaurants():
   else:
     return render_template('restaurants.html', restaurants = restaurants)
 
+#Show an uploaded Image
+@app.route('/images/<filename>')
+def uploaded_image(filename):
+  return send_from_directory(app.config['UPLOAD_FOLDER'],filename)
+
 #Create a new restaurant
 @app.route('/restaurant/new/', methods=['GET','POST'])
 def newRestaurant():
@@ -383,13 +403,16 @@ def deleteRestaurant(restaurant_id):
 @app.route('/restaurant/<int:restaurant_id>/')
 @app.route('/restaurant/<int:restaurant_id>/menu/')
 def showMenu(restaurant_id):
-    restaurant = session.query(Restaurant).filter_by(id = restaurant_id).one()
-    items = session.query(MenuItem).filter_by(restaurant_id = restaurant_id).all()
-    creator = getUserInfo(restaurant.user_id)
+    r = session.query(Restaurant).filter_by(id = restaurant_id).one()
+    a = session.query(MenuItem).filter_by(restaurant_id = r.id).filter(MenuItem.course == 'Appetizer').order_by(MenuItem.name).all()
+    e = session.query(MenuItem).filter_by(restaurant_id = r.id).filter(MenuItem.course == 'Entree').order_by(MenuItem.name).all()
+    b = session.query(MenuItem).filter_by(restaurant_id = r.id).filter(MenuItem.course == 'Beverage').order_by(MenuItem.name).all()
+    d = session.query(MenuItem).filter_by(restaurant_id = r.id).filter(MenuItem.course == 'Dessert').order_by(MenuItem.name).all()
+    creator = getUserInfo(r.user_id)
     if 'username' not in login_session or creator.id != login_session['user_id']:
-      return render_template('publicmenu.html', items = items, restaurant = restaurant, creator = creator)
+      return render_template('publicmenu.html', restaurant=r, app=a, ent=e, bev=b, des=d, creator = creator)
     else:
-      return render_template('menu.html', items = items, restaurant = restaurant, creator = creator)
+      return render_template('menu.html', restaurant=r, app=a, ent=e, bev=b, des=d, creator = creator)
 
 
 #Create a new menu item
@@ -398,13 +421,18 @@ def newMenuItem(restaurant_id):
   if 'username' not in login_session:
     return redirect('/login')
   if request.method == 'POST':
+      file = request.files['image']
+      if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
       item = MenuItem(
         name = request.form['name'], 
         description = request.form['description'], 
         price = request.form['price'], 
         course = request.form['course'], 
         restaurant_id = restaurant_id, 
-        user_id=login_session['user_id'])
+        user_id = login_session['user_id'],
+        image = filename)
       session.add(item)
       session.commit()
       flash("New menu item created: %s" % (item.name))
@@ -445,7 +473,7 @@ def deleteMenuItem(restaurant_id,menu_id):
   if request.method == 'POST':
     session.delete(item)
     session.commit()
-    flash('%s deleted successfully' % i.name)
+    flash('%s deleted successfully' % item.name)
     return redirect(url_for('showMenu', restaurant_id = restaurant_id))
   else:
     return render_template('deleteMenuItem.html', restaurant_id = restaurant_id, item = item)
