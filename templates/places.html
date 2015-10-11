@@ -1,56 +1,28 @@
 {% extends "main.html" %}
 {% block content %}
-{% include "header.html" %}
-<div class="row top-menu">
-	<div class="col-md-10"></div>
-	<div class="col-md-2 text-right"></div>
-</div>
-<div class="row divider blue">
-	<div class="col-md-12"></div>
-</div>
-<div class="row banner main">
-	<div class="col-md-1"></div>
-	<div class="col-md-11 padding-none">
-		<h1>Restaurants</h1>
-	</div>
-</div>
+<h1>Things You See All Over</h1>
 
-{% with messages = get_flashed_messages() %}{% if messages %}
-{% for message in messages %}
-<div class="alert alert-success alert-dismissable fade in" role="alert">
-	<button type="button" class="close" data-dismiss="alert" aria-label="Close">
-	  <span aria-hidden="true">&times;</span>
-	</button>
-	<p>{{ message }}</p>
-</div>
-{% endfor %}
-{% endif %}
-{% endwith %}
-	
-<div class="row padding-top padding-bottom">
-	<div class="col-md-1"></div>
-	<div class="col-md-10 padding-none">
-		<a href="{{url_for('newRestaurant')}}">
-			<button class="btn btn-default" id="new-restaurant">
-				<span class="glyphicon glyphicon-cutlery" aria-hidden="true"></span> Add Restaurant
+{% with messages = get_flashed_messages() %}
+	{% if messages %}
+		{% for message in messages %}
+		<div class="alert alert-success alert-dismissable fade in" role="alert">
+			<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+				<span aria-hidden="true">&times;</span>
 			</button>
-		</a>
-	</div>
-	<div class="col-md-1"></div>
+			<p>{{ message }}</p>
+		</div>
+		{% endfor %}
+	{% endif %}
+{% endwith %}
+
+{% for place in places %}
+	<a href = "{{url_for('showThings', place_id = place.id)}}">
+		<h3>{{place.name}}</h3>
+	</a>
+{% endfor %}
+<div class="row text-center">
+	<a class="btn btn-default" href="{{url_for('newRestaurant')}}">
+			<span class="glyphicon glyphicon-cutlery" aria-hidden="true"></span> Where&rsquo;s a Place You See All Kinds of Things?
+	</a>
 </div>
-{% if restaurants %}
-	{% for restaurant in restaurants %}
-		<a href = "{{url_for('showMenu', restaurant_id = restaurant.id)}}">
-			<div class="row">
-				<div class="col-md-1"></div>
-					<div class="col-md-10 restaurant-list">
-						<h3>{{restaurant.name}}</h3>
-					</div>
-				<div class="col-md-1"></div>
-			</div>
-		</a>
-	{% endfor %}
-{% else %}
-	<h3>There are no restaurants. Please add one to start.</h3>
-{% endif %}
 {% endblock %}
