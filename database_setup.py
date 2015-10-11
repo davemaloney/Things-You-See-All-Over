@@ -48,7 +48,7 @@ class Thing(Base):
 	kind_of_thing = Column(String(250))
 	image = Column(String(250))
 	place_id = Column(Integer,ForeignKey('place.id'))
-	place = relationship(Restaurant)
+	place = relationship(Place)
 	user_id = Column(Integer,ForeignKey('user.id'))
 	user = relationship(User)
 
