@@ -1,67 +1,77 @@
-import os
+import os, random, string, httplib2, json, requests
 from flask import Flask, render_template, request, redirect, jsonify, url_for, flash, make_response, Markup, session as login_session, send_from_directory
 from werkzeug import secure_filename
+from oauth2client.client import flow_from_clientsecrets, FlowExchangeError
+from sqlalchemy import create_engine, asc
+from sqlalchemy.orm import sessionmaker
+from database_setup import Base, Place, Thing, User
+
+app = Flask(__name__)
 
 #File Upload adapted from http://flask.pocoo.org/docs/0.10/patterns/fileuploads/
 # and http://stackoverflow.com/questions/30237504/flask-and-sqlalchemy-get-uploaded-file-using-path-stored-on-database
 UPLOAD_FOLDER = 'uploads'
-ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])
-
-app = Flask(__name__)
+ALLOWED_EXTENSIONS = set(['png', 'PNG', 'jpg', 'JPG', 'jpeg', 'JPEG', 'gif', 'GIF'])
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024
 
-import random, string, httplib2, json, requests
-from oauth2client.client import flow_from_clientsecrets
-from oauth2client.client import FlowExchangeError
-from sqlalchemy import create_engine, asc
-from sqlalchemy.orm import sessionmaker
-from database_setup import Base, Restaurant, MenuItem, User
-
-
-# Allowed file extensions check function
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
-
 #Connect to Database and create database session
-engine = create_engine('sqlite:///restaurantmenuwithusers.db')
+engine = create_engine('sqlite:///thingsyouseeallover.db')
 Base.metadata.bind = engine
 
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 
-#JSON APIs to view Restaurant Information
-@app.route('/restaurant/<int:restaurant_id>/menu/JSON')
-def restaurantMenuJSON(restaurant_id):
-  restaurant = session.query(Restaurant).filter_by(id = restaurant_id).one()
-  items = session.query(MenuItem).filter_by(restaurant_id = restaurant_id).all()
-  return jsonify(MenuItems=[i.serialize for i in items])
+################################################################################
+################################################################################
+################################################################################
+#
+# API Endpoints
+#
+################################################################################
+################################################################################
+################################################################################
 
-@app.route('/restaurant/<int:restaurant_id>/menu/<int:menu_id>/JSON')
-def menuItemJSON(restaurant_id, menu_id):
-  Menu_Item = session.query(MenuItem).filter_by(id = menu_id).one()
-  return jsonify(Menu_Item = Menu_Item.serialize)
+#JSON APIs to view info about Places and Things You See All Over
+@app.route('/place/<int:place_id>/thing/JSON')
+def placeJSON(place_id):
+  place = session.query(Place).filter_by(id = place_id).one()
+  things = session.query(Thing).filter_by(place_id = place_id).all()
+  return jsonify(Things=[t.serialize for t in things])
 
-@app.route('/restaurant/JSON')
-def restaurantsJSON():
-  restaurants = session.query(Restaurant).all()
-  return jsonify(restaurants= [r.serialize for r in restaurants])
+@app.route('/place/<int:place_id>/thing/<int:thing_id>/JSON')
+def stuffJSON(place_id, thing_id):
+  thing = session.query(Thing).filter_by(id = thing_id).one()
+  return jsonify(thing = thing.serialize)
 
+@app.route('/place/JSON')
+def placesJSON():
+  places = session.query(Place).all()
+  return jsonify(places= [p.serialize for p in places])
 
+################################################################################
+################################################################################
+################################################################################
+#
+# Login Procedures
+#
+################################################################################
+################################################################################
+################################################################################
 
-
-
-
-#LOGIN
 @app.route('/login/')
 def showLogin():
   state = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in xrange(32))
   login_session['state'] = state
   return render_template('login.html', STATE=state)
 
-#GitHub Connect
+################################################################################
+#
+# Login Procedures: GitHub
+#
+################################################################################
+
 @app.route('/ghcallback')
 def ghcallback():
     # Get the code from url, store as 'code'
@@ -111,10 +121,15 @@ def ghcallback():
     login_session['user_id'] = user_id
 
     flash("Now logged in as %s" % login_session['username'])
-    return redirect(url_for('showRestaurants'))
+    return redirect(url_for('showPlaces'))
 
 
-#Facebook Connect
+################################################################################
+#
+# Login Procedures: Facebook
+#
+################################################################################
+
 @app.route('/fbconnect', methods=['POST'])
 def fbconnect():
     # Check the login state, set the login state to 'access_token'
@@ -192,7 +207,12 @@ def fbdisconnect():
     return "you have been logged out"
 
 
-#Google Connect
+################################################################################
+#
+# Login Procedures: Google
+#
+################################################################################
+
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
   # Check the login state, set the login state to 'code'
@@ -302,9 +322,12 @@ def gdisconnect():
     response.headers['Content-Type'] = 'application/json'
     return response
 
+################################################################################
+#
+# Login Procedures: Disconnect
+#
+################################################################################
 
-
-# Disconnect based on provider
 @app.route('/disconnect')
 def disconnect():
     if 'provider' in login_session:
@@ -324,100 +347,143 @@ def disconnect():
         del login_session['user_id']
         del login_session['provider']
         flash("You have successfully been logged out.")
-        return redirect(url_for('showRestaurants'))
+        return redirect(url_for('showPlaces'))
     else:
         flash("You were not logged in")
-        return redirect(url_for('showRestaurants'))
+        return redirect(url_for('showPlaces'))
 
 
+################################################################################
+################################################################################
+################################################################################
+#
+# Places
+#
+################################################################################
+################################################################################
+################################################################################
 
+################################################################################
+#
+# Places: Show All
+#
+################################################################################
 
-#Show all restaurants
 @app.route('/')
-@app.route('/restaurant/')
-def showRestaurants():
-  restaurants = session.query(Restaurant).order_by(Restaurant.name)
+@app.route('/places/')
+def showPlaces():
+  places = session.query(Place).order_by(Place.name)
   if 'username' not in login_session:
-    return render_template('publicrestaurants.html', restaurants = restaurants)
+    return render_template('publicplaces.html', places = places)
   else:
-    return render_template('restaurants.html', restaurants = restaurants)
+    return render_template('places.html', places = places)
 
-#Show an uploaded Image
-@app.route('/images/<filename>')
-def uploaded_image(filename):
-  return send_from_directory(app.config['UPLOAD_FOLDER'],filename)
+################################################################################
+#
+# Place: Create
+#
+################################################################################
 
-#Create a new restaurant
-@app.route('/restaurant/new/', methods=['GET','POST'])
-def newRestaurant():
+@app.route('/place/new/', methods=['GET','POST'])
+def newPlace():
   if 'username' not in login_session:
     return redirect('/login')
   if request.method == 'POST':
-    newRestaurant = Restaurant(name = request.form['name'], user_id=login_session['user_id'])
-    session.add(newRestaurant)
-    flash("New restaurant added: %s" % newRestaurant.name)
+    place = Place(name = request.form['name'], user_id=login_session['user_id'])
+    session.add(place)
+    flash("New place to see stuff: %s" % place.name)
     session.commit()
-    return redirect(url_for('showRestaurants'))
+    return redirect(url_for('showPlaces'))
   else:
-    return render_template('newRestaurant.html')
+    return render_template('newplace.html')
 
-#Edit a restaurant
-@app.route('/restaurant/<int:restaurant_id>/edit/', methods = ['GET', 'POST'])
-def editRestaurant(restaurant_id):
+################################################################################
+#
+# Place: Edit
+#
+################################################################################
+
+@app.route('/place/<int:place_id>/edit/', methods = ['GET', 'POST'])
+def editPlace(place_id):
   if 'username' not in login_session:
     return redirect('/login')
-  editedRestaurant = session.query(Restaurant).filter_by(id = restaurant_id).one()
-  creator = getUserInfo(editedRestaurant.user_id)
+  place = session.query(Place).filter_by(id = place_id).one()
+  creator = getUserInfo(place.user_id)
   if creator.id == login_session['user_id']:
     if request.method == 'POST':
         if request.form['name']:
-          editedRestaurant.name = request.form['name']
-          flash('Restaurant Successfully Edited %s' % editedRestaurant.name)
-          return redirect(url_for('showRestaurants'))
+          place.name = request.form['name']
+          flash('%s successfully edited!' % place.name)
+          return redirect(url_for('showPlaces'))
     else:
-      return render_template('editRestaurant.html', restaurant = editedRestaurant)
+      return render_template('editplace.html', place = place)
   else:
-    message = Markup("You don&rsquo;t have permissions to edit this restaurant")
+    message = Markup("You don&rsquo;t have permissions to edit %s" % place.name)
     flash(message)
-    return redirect(url_for('showRestaurants'))
+    return redirect(url_for('showPlaces'))
 
-#Delete a restaurant
-@app.route('/restaurant/<int:restaurant_id>/delete/', methods = ['GET','POST'])
-def deleteRestaurant(restaurant_id):
-  restaurantToDelete = session.query(Restaurant).filter_by(id = restaurant_id).one()
+################################################################################
+#
+# Place: Delete
+#
+################################################################################
+
+@app.route('/place/<int:place_id>/delete/', methods = ['GET','POST'])
+def deletePlace(place_id):
+  place = session.query(Place).filter_by(id = place_id).one()
   if 'username' not in login_session:
     return redirect('/login')
-  if restaurantToDelete.user_id != login_session['user_id']:
-    message = Markup("You don&rsquo;t have permissions to delete this restaurant")
+  if place.user_id != login_session['user_id']:
+    message = Markup("You don&rsquo;t have permissions to delete %s" % place.name)
     flash(message)
-    return redirect(url_for('showRestaurants'))
+    return redirect(url_for('showPlaces'))
   if request.method == 'POST':
-    session.delete(restaurantToDelete)
-    flash('%s Successfully Deleted' % restaurantToDelete.name)
+    session.delete(place)
+    flash('%s Successfully Deleted' % place.name)
     session.commit()
-    return redirect(url_for('showRestaurants', restaurant_id = restaurant_id))
+    return redirect(url_for('showPlaces'))
   else:
-    return render_template('deleteRestaurant.html',restaurant = restaurantToDelete)
+    return render_template('deleteplace.html',place = place)
 
-#Show a restaurant menu
-@app.route('/restaurant/<int:restaurant_id>/')
-@app.route('/restaurant/<int:restaurant_id>/menu/')
-def showMenu(restaurant_id):
-    r = session.query(Restaurant).filter_by(id = restaurant_id).one()
-    a = session.query(MenuItem).filter_by(restaurant_id = r.id).filter(MenuItem.course == 'Appetizer').order_by(MenuItem.name).all()
-    e = session.query(MenuItem).filter_by(restaurant_id = r.id).filter(MenuItem.course == 'Entree').order_by(MenuItem.name).all()
-    b = session.query(MenuItem).filter_by(restaurant_id = r.id).filter(MenuItem.course == 'Beverage').order_by(MenuItem.name).all()
-    d = session.query(MenuItem).filter_by(restaurant_id = r.id).filter(MenuItem.course == 'Dessert').order_by(MenuItem.name).all()
-    creator = getUserInfo(r.user_id)
+################################################################################
+################################################################################
+################################################################################
+#
+# Things
+#
+################################################################################
+################################################################################
+################################################################################
+
+################################################################################
+#
+# Things: Show one Place
+#
+################################################################################
+
+@app.route('/place/<int:place_id>/')
+@app.route('/place/<int:place_id>/thing/')
+def showPlace(place_id):
+    c = session.query(Place).filter_by(id = place_id).one()
+    p = session.query(Thing).filter_by(place_id = c.id).filter(Thing.kind_of_thing == 'People').order_by(Thing.name).all()
+    l = session.query(Thing).filter_by(place_id = c.id).filter(Thing.kind_of_thing == 'Plants').order_by(Thing.name).all()
+    a = session.query(Thing).filter_by(place_id = c.id).filter(Thing.kind_of_thing == 'Animals').order_by(Thing.name).all()
+    m = session.query(Thing).filter_by(place_id = c.id).filter(Thing.kind_of_thing == 'Machines').order_by(Thing.name).all()
+    o = session.query(Thing).filter_by(place_id = c.id).filter(Thing.kind_of_thing == 'Other Stuff').order_by(Thing.name).all()
+    creator = getUserInfo(c.user_id)
     if 'username' not in login_session or creator.id != login_session['user_id']:
-      return render_template('publicmenu.html', restaurant=r, app=a, ent=e, bev=b, des=d, creator = creator)
+      return render_template('publicthings.html', place=c, people=p, plants=l, animals=a, machines=m, other=o, creator = creator)
     else:
-      return render_template('menu.html', restaurant=r, app=a, ent=e, bev=b, des=d, creator = creator)
+      return render_template('things.html', place=c, people=p, plants=l, animals=a, machines=m, other=o, creator = creator)
 
+################################################################################
+#
+# Thing: Create
+#
+################################################################################
 
-#Create a new menu item
-@app.route('/restaurant/<int:restaurant_id>/menu/new/',methods=['GET','POST'])
-def newMenuItem(restaurant_id):
+@app.route('/place/<int:place_id>/thing/new/',methods=['GET','POST'])
+def newThing(place_id):
   if 'username' not in login_session:
     return redirect('/login')
   if request.method == 'POST':
@@ -425,59 +491,101 @@ def newMenuItem(restaurant_id):
       if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-      item = MenuItem(
+      t = Thing(
         name = request.form['name'], 
         description = request.form['description'], 
-        price = request.form['price'], 
-        course = request.form['course'], 
-        restaurant_id = restaurant_id, 
+        kind_of_thing = request.form['kind_of_thing'], 
+        place_id = place_id, 
         user_id = login_session['user_id'],
         image = filename)
-      session.add(item)
+      session.add(t)
       session.commit()
-      flash("New menu item created: %s" % (item.name))
-      return redirect(url_for('showMenu', restaurant_id = restaurant_id))
+      flash("It's something you see all over: %s" % (t.name))
+      return redirect(url_for('showPlace', place_id = place_id))
   else:
-      return render_template('newmenuitem.html', restaurant_id = restaurant_id)
+      return render_template('newthing.html', place_id = place_id)
 
+################################################################################
+#
+# Thing: Edit
+#
+################################################################################
 
-#Edit a menu item
-@app.route('/restaurant/<int:restaurant_id>/menu/<int:menu_id>/edit', methods=['GET','POST'])
-def editMenuItem(restaurant_id, menu_id):
+@app.route('/place/<int:place_id>/thing/<int:thing_id>/edit', methods=['GET','POST'])
+def editThing(place_id, thing_id):
   if 'username' not in login_session:
     return redirect('/login')
-  item = session.query(MenuItem).filter_by(id = menu_id).one()
+  t = session.query(Thing).filter_by(id = thing_id).one()
   if request.method == 'POST':
     if request.form['name']:
-      item.name = request.form['name']
+      t.name = request.form['name']
     if request.form['description']:
-      item.description = request.form['description']
-    if request.form['price']:
-      item.price = request.form['price']
-    if request.form['course']:
-      item.course = request.form['course']
-    session.add(item)
+      t.description = request.form['description']
+    if request.form['kind_of_thing']:
+      t.kind_of_thing = request.form['kind_of_thing']
+    if request.files['image']:
+      file = request.files['image']
+      if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+      t.image = filename      
+    session.add(t)
     session.commit() 
-    flash("%s edited successfully!" % item.name)
-    return redirect(url_for('showMenu', restaurant_id = restaurant_id))
+    flash("%s edited successfully!" % t.name)
+    return redirect(url_for('showPlace', place_id = place_id))
   else:
-    return render_template('editmenuitem.html', restaurant_id = restaurant_id, menu_id = menu_id, item = item)
+    return render_template('editthing.html', place_id = place_id, thing_id = thing_id, item = t)
 
+################################################################################
+#
+# Thing: Delete
+#
+################################################################################
 
-#Delete a menu item
-@app.route('/restaurant/<int:restaurant_id>/menu/<int:menu_id>/delete', methods = ['GET','POST'])
-def deleteMenuItem(restaurant_id,menu_id):
+@app.route('/place/<int:place_id>/thing/<int:thing_id>/delete', methods = ['GET','POST'])
+def deleteThing(place_id,thing_id):
   if 'username' not in login_session:
     return redirect('/login')
-  item = session.query(MenuItem).filter_by(id = menu_id).one() 
+  t = session.query(Thing).filter_by(id = thing_id).one() 
   if request.method == 'POST':
-    session.delete(item)
+    session.delete(t)
     session.commit()
-    flash('%s deleted successfully' % item.name)
-    return redirect(url_for('showMenu', restaurant_id = restaurant_id))
+    flash('%s deleted successfully' % t.name)
+    return redirect(url_for('showPlace', place_id = place_id))
   else:
-    return render_template('deleteMenuItem.html', restaurant_id = restaurant_id, item = item)
+    return render_template('deletething.html', place_id = place_id, item = t)
 
+
+################################################################################
+################################################################################
+################################################################################
+#
+# Image Handling
+#
+################################################################################
+################################################################################
+################################################################################
+
+#Allowed file extensions check function
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+
+#Show an uploaded Image
+@app.route('/images/<filename>')
+def uploaded_image(filename):
+  return send_from_directory(app.config['UPLOAD_FOLDER'],filename)
+
+
+################################################################################
+################################################################################
+################################################################################
+#
+# User Handling
+#
+################################################################################
+################################################################################
+################################################################################
 
 def getUserID(email):
   try:
@@ -500,6 +608,15 @@ def createUser(login_session):
   user = session.query(User).filter_by(email = login_session['email']).one()
   return user.id
 
+################################################################################
+################################################################################
+################################################################################
+#
+# App Config
+#
+################################################################################
+################################################################################
+################################################################################
 
 if __name__ == '__main__':
   app.secret_key = '\xe1\xad\xdf\xc2\xa66\xde\xc8\xdb\x0f\x05\xac\x89\x06\xb0\x8d&\xa0Z\xe1\xb8\xbc-\xf6'

@@ -2,75 +2,66 @@ from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import create_engine
- 
+
 Base = declarative_base()
 
-
 class User(Base):
-  __tablename__ = 'user'
+	__tablename__ = 'user'
 
-  id = Column(Integer, primary_key=True)
-  name = Column(String(250), nullable=False)
-  email = Column(String(250))
-  picture = Column(String(250))
+	name = Column(String(250), nullable=False)
+	id = Column(Integer, primary_key=True)
+	email = Column(String(250))
+	picture = Column(String(250))
 
-  @property
-  def serialize(self):
-    """Return object data in easily serializeable format"""
-    return {
-      'name'         : self.name,
-      'id'           : self.id,
-      'picture'      : self.picture,
-      'email'        : self.email,
-    }
+	@property
+	def serialize(self):
+		"""Return object data in easily serializeable format"""
+		return {
+			'name'          : self.name,
+			'id'            : self.id,
+			'picture'       : self.picture,
+			'email'         : self.email,
+		}
 
+class Place(Base):
+	__tablename__ = 'place'
 
-class Restaurant(Base):
-    __tablename__ = 'restaurant'
-   
-    id = Column(Integer, primary_key=True)
-    name = Column(String(250), nullable=False)
-    user_id = Column(Integer,ForeignKey('user.id'))
-    user = relationship(User)
+	name = Column(String(250), nullable=False)
+	id = Column(Integer, primary_key=True)
+	user_id = Column(Integer,ForeignKey('user.id'))
+	user = relationship(User)
 
-    @property
-    def serialize(self):
-       """Return object data in easily serializeable format"""
-       return {
-           'name'         : self.name,
-           'id'           : self.id,
-       }
- 
-class MenuItem(Base):
-    __tablename__ = 'menu_item'
+	@property
+	def serialize(self):
+		"""Return object data in easily serializeable format"""
+		return {
+			'name'          : self.name,
+			'id'            : self.id,
+		}
 
+class Thing(Base):
+	__tablename__ = 'thing'
 
-    name =Column(String(80), nullable = False)
-    id = Column(Integer, primary_key = True)
-    description = Column(String(250))
-    price = Column(String(8))
-    course = Column(String(250))
-    image = Column(String(250))
-    restaurant_id = Column(Integer,ForeignKey('restaurant.id'))
-    restaurant = relationship(Restaurant)
-    user_id = Column(Integer,ForeignKey('user.id'))
-    user = relationship(User)
+	name =Column(String(80), nullable = False)
+	id = Column(Integer, primary_key = True)
+	description = Column(String(250))
+	kind_of_thing = Column(String(250))
+	image = Column(String(250))
+	place_id = Column(Integer,ForeignKey('place.id'))
+	place = relationship(Restaurant)
+	user_id = Column(Integer,ForeignKey('user.id'))
+	user = relationship(User)
 
+	@property
+	def serialize(self):
+		"""Return object data in easily serializeable format"""
+		return {
+			'name'          : self.name,
+			'id'            : self.id,
+			'description'   : self.description,
+			'kind_of_thing' : self.course,
+		}
 
-    @property
-    def serialize(self):
-       """Return object data in easily serializeable format"""
-       return {
-           'name'         : self.name,
-           'description'         : self.description,
-           'id'         : self.id,
-           'price'         : self.price,
-           'course'         : self.course,
-       }
-
-
-
-engine = create_engine('sqlite:///restaurantmenuwithusers.db')
- 
+engine = create_engine('sqlite:///thingsyouseeallover.db')
 
 Base.metadata.create_all(engine)

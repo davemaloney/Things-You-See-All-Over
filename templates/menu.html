@@ -60,8 +60,8 @@
 					<img class="img-responsive" src="{{ url_for('uploaded_image', filename = i.image)}}" />
 					<h3>{{i.name}}</h3>
 					<p>{{i.description}}</p>
-					<p><a class="btn btn-primary btn-sm" href="{{ url_for('editMenuItem', restaurant_id=restaurant.id, menu_id=i.id) }}" data-toggle="modal" data-target=".newEditDeleteModal">Edit</a> 
-					<a class="btn btn-danger btn-sm" href="{{ url_for('deleteMenuItem', restaurant_id=restaurant.id, menu_id=i.id) }}" data-toggle="modal" data-target=".newEditDeleteModal">Delete</a></p>
+					<p><a class="btn btn-primary btn-sm" href="{{ url_for('editMenuItem', restaurant_id=restaurant.id, menu_id=i.id) }}">Edit</a> 
+					<a class="btn btn-danger btn-sm" href="{{ url_for('deleteMenuItem', restaurant_id=restaurant.id, menu_id=i.id) }}" >Delete</a></p><!-- data-toggle="modal" data-target=".newEditDeleteModal"-->
 				</div>
 				<div class="col-xs-4">
 					<h3>{{i.price}} </h3>
