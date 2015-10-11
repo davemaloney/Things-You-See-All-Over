@@ -1,95 +1,62 @@
 {% extends "main.html" %}
 {% block content %}
-{% include "header.html" %}
-	
-	<div class="row divider green">
-		<div class="col-md-12"></div>
+<div class="row">
+	<div class="col-sm-10">
+			<h1>{{ place.name }}</h1>
 	</div>
-	<div class="row banner menu">
-		<div class="col-md-11 col-md-offset-1 padding-none">
-			<h1>{{ restaurant.name }}
-			<figure class="creator">
-				<img src="{{ creator.picture}}">
+	<div class="col-sm-2">
+			<figure class="creator text-center">
+				<img class="img-responsive img-circle" alt="{{creator.name}}" src="{{creator.picture}}">
 				<figcaption>{{ creator.name }}</figcaption>
 			</figure>
-			</h1>
+	</div>
+</div>
 
+{% with messages = get_flashed_messages() %}
+	{% if messages %}
+		{% for message in messages %}
+		<div class="alert alert-success alert-dismissable fade in" role="alert">
+			<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+				<span aria-hidden="true">&times;</span>
+			</button>
+			<p>{{ message }}</p>
 		</div>
-	</div>
-	<div class="row padding-top padding-bottom">
-		<div class="col-md-1"></div>
-		<div class="col-md-11 padding-none">
-			
-		</div>
-		<div class="col-md-7"></div>
-	</div>
-	<div class="row">
-		<div class="col-md-12">
-			{% with messages = get_flashed_messages() %}
-				{% if messages %}
-					<ul>
-						{% for message in messages %}
-							 <li> <strong> {{ message }} </strong> </li>
-						{% endfor %}
-					</ul>
-				{% endif %}
-			{% endwith %}
-		</div>
-	</div>
-	{% if items !=[] %}	
-		<div class="row">
-			<div class="col-md-1"></div>
-			<div class="col-md-3">
-				<h2>Appetizers</h2>
-					{% for i in items %}
-						{% if i.course == 'Appetizer' %}
-							<div class="menu-item">
-								<h3>{{i.name}}</h3>
-								<p>{{i.description}}</p>
-								<p class="menu-price">{{i.price}}</p>
-								
-							</div>
-						{% endif %}
-					{% endfor %}
-			</div>
-			<div class="col-md-4">			
-				<h2>Entrees</h2>
-					{% for i in items %}
-						{% if i.course == 'Entree' %}
-						<div class="menu-item">
-							<h3>{{i.name}}</h3>
-							<p>{{i.description}}</p>
-							<p class="menu-price">{{i.price}}</p>
-							
-						</div>
-						{% endif %}
-					{% endfor %}
-			</div>
-			<div class="col-md-3">
-				<h2>Desserts</h2>
-					{% for i in items %}
-						{% if i.course == 'Dessert' %}
-						<div class="menu-item">
-							<h3>{{i.name}}</h3>
-							<p>{{i.description}}</p>
-							<p class="menu-price">{{i.price}}</p>
-							
-						</div>
-						{% endif %}
-					{% endfor %}
-				<h2>Beverages</h2>
-					{% for i in items %}
-						{% if i.course == 'Beverage' %}
-						<div class="menu-item">
-							<h3>{{i.name}}</h3>
-							<p>{{i.description}}</p>
-							<p class="menu-price">{{i.price}}</p>
-							
-						</div>
-						{% endif %}
-					{% endfor %}
-			</div>
-			<div class="col-md-1"></div>
-		</div>
+		{% endfor %}
 	{% endif %}
+{% endwith %}
+
+<div class="row">
+	<div class="col-xs-12">
+		<p>
+			<a href="{{url_for('newThing', place_id = place.id )}}" data-toggle="modal" data-target=".newEditDeleteModal">
+				<button class="btn btn-success" id="new-menu-item">
+					<i class="fa fa-plus fa-lg"></i> Add a Thing
+				</button>
+			</a>
+		</p>
+	</div>
+</div>
+	
+	{% macro all_items(items, kind_of_thing) %}
+		{% if items %}
+		<h2>{{kind_of_thing}}</h2>
+			{% for i in items %}
+			<div class="row">
+				<div class="col-xs-8">
+					{% if i.image %}
+					<img class="img-responsive" src="{{ url_for('uploaded_image', filename = i.image)}}" />
+					{% endif %}
+					<h3>{{i.name}}</h3>
+					<p>{{i.description}}</p>
+				</div>
+				<div class="col-xs-4">
+
+				</div>
+			</div><!-- end .row {{i.name}} -->
+			{% endfor %}
+		{% endif %}
+	{% endmacro %}
+	<div>
+	{{ all_items(people, 'People') }}{{ all_items(plants, 'Plants') }}{{ all_items(animals, 'Animals') }}{{ all_items(machines, 'Machines') }}{{ all_items(other, 'Other Stuff') }}
+	</div>
 {% endblock %}

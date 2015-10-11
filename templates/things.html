@@ -1,76 +1,72 @@
 {% extends "main.html" %}
 {% block content %}
-{% include "header.html" %}
-	<div class="row divider green">
-		<div class="col-md-12"></div>
+<div class="row">
+	<div class="col-sm-10">
+			<h1>{{ place.name }}</h1>
 	</div>
-	<div class="row banner menu">
-		<div class="col-md-11 col-md-offset-1 padding-none">
-			<h1>{{ restaurant.name }}
-			<figure class="creator">
-				<img src="{{ creator.picture}}">
+	<div class="col-sm-2">
+			<figure class="creator text-center">
+				<img class="img-responsive img-circle" alt="{{creator.name}}" src="{{creator.picture}}">
 				<figcaption>{{ creator.name }}</figcaption>
 			</figure>
-			</h1>
-
-		</div>
 	</div>
+</div>
 
-
-		      {% with messages = get_flashed_messages() %}
-      {% if messages %}
-          
- <div class = 'alert alert-success text-center'>      
-        {% for message in messages %}
-            {{ message }} 
-        {% endfor %}
- 
-</div>     
-        {% endif %}
-    {% endwith %}
-
-	<div class="row padding-top padding-bottom">
-		<div class="col-md-1"></div>
-		<div class="col-md-11 padding-none">
-			<a href="{{url_for('editRestaurant', restaurant_id = restaurant.id )}}">
-				<button class="btn btn-default" id="new-menu-item">
-					<span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>Edit Restaurant
-				</button>
-			</a>
-			<a href="{{url_for('newMenuItem', restaurant_id = restaurant.id )}}">
-				<button class="btn btn-default" id="new-menu-item">
-					<span class="glyphicon glyphicon-glass" aria-hidden="true"></span>Add Menu Item
-				</button>
-			</a>
-						<a href="{{url_for('deleteRestaurant', restaurant_id = restaurant.id )}}">
-				<button class="btn btn-default delete" id="delete-restaurant">
-					<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>Delete Restaurant
-				</button>
-			</a>
+{% with messages = get_flashed_messages() %}
+	{% if messages %}
+		{% for message in messages %}
+		<div class="alert alert-success alert-dismissable fade in" role="alert">
+			<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+				<span aria-hidden="true">&times;</span>
+			</button>
+			<p>{{ message }}</p>
 		</div>
-		<div class="col-md-7"></div>
+		{% endfor %}
+	{% endif %}
+{% endwith %}
+
+<div class="row">
+	<div class="col-xs-12">
+		<p>
+			<a class="btn btn-info" href="{{url_for('editPlace', place_id = place.id )}}" data-toggle="modal" data-target=".newEditDeleteModal"><i class="fa fa-pencil fa-lg"></i> Edit This Place</a>
+			<a class="btn btn-danger" href="{{url_for('deletePlace', place_id = place.id )}}" data-toggle="modal" data-target=".newEditDeleteModal"><i class="fa fa-trash-o fa-lg"></i> Delete This Place</a>
+		</p>
 	</div>
+</div>
+<div class="row">
+	<div class="col-xs-12">
+		<p>
+			<a href="{{url_for('newThing', place_id = place.id )}}" data-toggle="modal" data-target=".newEditDeleteModal">
+				<button class="btn btn-success" id="new-menu-item">
+					<i class="fa fa-plus fa-lg"></i> Add a Thing
+				</button>
+			</a>
+		</p>
+	</div>
+</div>
 	
-	{% macro all_items(items, course_name) %}
+	{% macro all_items(items, kind_of_thing) %}
 		{% if items %}
-		<h2>{{course_name}}</h2>
+		<h2>{{kind_of_thing}}</h2>
 			{% for i in items %}
 			<div class="row">
 				<div class="col-xs-8">
+					{% if i.image %}
 					<img class="img-responsive" src="{{ url_for('uploaded_image', filename = i.image)}}" />
+					{% endif %}
 					<h3>{{i.name}}</h3>
 					<p>{{i.description}}</p>
-					<p><a class="btn btn-primary btn-sm" href="{{ url_for('editMenuItem', restaurant_id=restaurant.id, menu_id=i.id) }}">Edit</a> 
-					<a class="btn btn-danger btn-sm" href="{{ url_for('deleteMenuItem', restaurant_id=restaurant.id, menu_id=i.id) }}" >Delete</a></p><!-- data-toggle="modal" data-target=".newEditDeleteModal"-->
+					<p><a class="btn btn-primary btn-sm" href="{{ url_for('editThing', place_id=place.id, thing_id=i.id) }}" data-toggle="modal" data-target=".newEditDeleteModal">Edit</a> 
+					<a class="btn btn-danger btn-sm" href="{{ url_for('deleteThing', place_id=place.id, thing_id=i.id) }}" data-toggle="modal" data-target=".newEditDeleteModal">Delete</a></p>
 				</div>
 				<div class="col-xs-4">
-					<h3>{{i.price}} </h3>
+
 				</div>
 			</div><!-- end .row {{i.name}} -->
 			{% endfor %}
 		{% endif %}
 	{% endmacro %}
-	<div class="well">
-	{{ all_items(app, 'Appetizers') }}{{ all_items(ent, 'Entrees') }}{{ all_items(bev, 'Beverages') }}{{ all_items(des, 'Desserts') }}
+	<div>
+	{{ all_items(people, 'People') }}{{ all_items(plants, 'Plants') }}{{ all_items(animals, 'Animals') }}{{ all_items(machines, 'Machines') }}{{ all_items(other, 'Other Stuff') }}
 	</div>
 {% endblock %}

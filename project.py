@@ -6,12 +6,12 @@ from sqlalchemy import create_engine, asc
 from sqlalchemy.orm import sessionmaker
 from database_setup import Base, Place, Thing, User
 
-app = Flask(__name__)
-
 #File Upload adapted from http://flask.pocoo.org/docs/0.10/patterns/fileuploads/
 # and http://stackoverflow.com/questions/30237504/flask-and-sqlalchemy-get-uploaded-file-using-path-stored-on-database
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = set(['png', 'PNG', 'jpg', 'JPG', 'jpeg', 'JPEG', 'gif', 'GIF'])
+
+app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024
 
@@ -21,6 +21,27 @@ Base.metadata.bind = engine
 
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
+
+
+################################################################################
+################################################################################
+################################################################################
+#
+# Image Handling
+#
+################################################################################
+################################################################################
+################################################################################
+
+#Allowed file extensions check function
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+
+#Show an uploaded Image
+@app.route('/images/<filename>')
+def uploaded_image(filename):
+  return send_from_directory(app.config['UPLOAD_FOLDER'],filename)
 
 
 ################################################################################
@@ -204,7 +225,7 @@ def fbdisconnect():
     url = 'https://graph.facebook.com/%s/permissions?access_token=%s' % (facebook_id,access_token)
     h = httplib2.Http()
     result = h.request(url, 'DELETE')[1]
-    return "you have been logged out"
+    return "You have been logged out."
 
 
 ################################################################################
@@ -296,7 +317,7 @@ def gconnect():
   output += '<img src="'
   output += login_session['picture']
   output += ' " style="width:300px; height:300px; border-radius:150px;">'
-  flash("you are now logged in as %s" %login_session['username'])
+  flash("You are now logged in as %s" %login_session['username'])
   return output
 
 #Google Disconnect
@@ -414,7 +435,7 @@ def editPlace(place_id):
         if request.form['name']:
           place.name = request.form['name']
           flash('%s successfully edited!' % place.name)
-          return redirect(url_for('showPlaces'))
+          return redirect(url_for('showThings', place_id=place_id))
     else:
       return render_template('editplace.html', place = place)
   else:
@@ -463,7 +484,7 @@ def deletePlace(place_id):
 
 @app.route('/place/<int:place_id>/')
 @app.route('/place/<int:place_id>/thing/')
-def showPlace(place_id):
+def showThings(place_id):
     c = session.query(Place).filter_by(id = place_id).one()
     p = session.query(Thing).filter_by(place_id = c.id).filter(Thing.kind_of_thing == 'People').order_by(Thing.name).all()
     l = session.query(Thing).filter_by(place_id = c.id).filter(Thing.kind_of_thing == 'Plants').order_by(Thing.name).all()
@@ -472,9 +493,9 @@ def showPlace(place_id):
     o = session.query(Thing).filter_by(place_id = c.id).filter(Thing.kind_of_thing == 'Other Stuff').order_by(Thing.name).all()
     creator = getUserInfo(c.user_id)
     if 'username' not in login_session or creator.id != login_session['user_id']:
-      return render_template('things-public.html', place=c, people=p, plants=l, animals=a, machines=m, other=o, creator = creator)
+      return render_template('things-public.html', place=c, people=p, plants=l, animals=a, machines=m, other=o, creator=creator)
     else:
-      return render_template('things.html', place=c, people=p, plants=l, animals=a, machines=m, other=o, creator = creator)
+      return render_template('things.html', place=c, people=p, plants=l, animals=a, machines=m, other=o, creator=creator)
 
 ################################################################################
 #
@@ -501,7 +522,7 @@ def newThing(place_id):
       session.add(t)
       session.commit()
       flash("It's something you see all over: %s" % (t.name))
-      return redirect(url_for('showPlace', place_id = place_id))
+      return redirect(url_for('showThings', place_id = place_id))
   else:
       return render_template('newthing.html', place_id = place_id)
 
@@ -532,7 +553,7 @@ def editThing(place_id, thing_id):
     session.add(t)
     session.commit() 
     flash("%s edited successfully!" % t.name)
-    return redirect(url_for('showPlace', place_id = place_id))
+    return redirect(url_for('showThings', place_id = place_id))
   else:
     return render_template('editthing.html', place_id = place_id, thing_id = thing_id, item = t)
 
@@ -551,30 +572,9 @@ def deleteThing(place_id,thing_id):
     session.delete(t)
     session.commit()
     flash('%s deleted successfully' % t.name)
-    return redirect(url_for('showPlace', place_id = place_id))
+    return redirect(url_for('showThings', place_id = place_id))
   else:
     return render_template('deletething.html', place_id = place_id, item = t)
-
-
-################################################################################
-################################################################################
-################################################################################
-#
-# Image Handling
-#
-################################################################################
-################################################################################
-################################################################################
-
-#Allowed file extensions check function
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
-
-#Show an uploaded Image
-@app.route('/images/<filename>')
-def uploaded_image(filename):
-  return send_from_directory(app.config['UPLOAD_FOLDER'],filename)
 
 
 ################################################################################

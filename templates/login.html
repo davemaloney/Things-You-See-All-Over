@@ -1,19 +1,12 @@
-<!--<!DOCTYPE html>
-<html lang="en">
-	<head>
-		<link href='http://fonts.googleapis.com/css?family=Roboto:400,300,700' rel='stylesheet' type='text/css'>
-		<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
-		<link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}">
+<div class="modal-header">
+	<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+	<h4 class="modal-title" id="myModalLabel">Login to Add Places and Edit Things</h4>
+</div>
 
-		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-	</head>
-	<body>
--->	
-		<script src="https://apis.google.com/js/client:platform.js?onload=start" async defer></script>
-
+<script src="https://apis.google.com/js/client:platform.js?onload=start" async defer></script>
+<div class="modal-body">
 	<div class="text-center">
 			<h2>Sign in with your preferred account</h2>
-			<p>This will only verify your email address. You can sign in with a different account later.</p>
 
 			<!-- Google Plus login button -->
 			<div id="signinButton">
@@ -44,7 +37,7 @@
 								if (result) {
 									$('#result').html('Login Successful!</br>'+ result + '</br> Redirecting . . .')
 									setTimeout(function() {
-										window.location.href = "/restaurant";
+										window.location.href = "/";
 									}, 4000);
 								} else if (authResult['error']) {
 									console.log('There was an error: ' + authResult['error']);
@@ -59,9 +52,9 @@
 
 
 			<!-- GitHub login button -->
-			<div>
-				<a href='javascript:gitHubSignIn()'>Login with GitHub</a>
-			</div>
+			<p>
+				<a class="btn btn-dark" href='javascript:gitHubSignIn()'><i class="fa fa-github fa-lg"></i> Login with GitHub</a>
+			</p>
 			<script type="text/javascript">
 				function gitHubSignIn() {
 					var client_id = 'b225641d071341dc3e8b';
@@ -72,11 +65,11 @@
 			</script>
 
 			<!--FACEBOOK SIGN IN -->
-			<div>
+			<p>
 				<fb:login-button data-size="large" scope="public_profile,email" onlogin="sendTokenToServer();">
 					<a href='javascript:sendTokenToServer()'>Login with Facebook</a>
 				</fb:login-button>
-			</div>
+			</p>
 			<script>
 			  window.fbAsyncInit = function() {
 			  FB.init({
@@ -114,7 +107,7 @@
 			        if (result) {
 			          $('#result').html('Login Successful!</br>'+ result + '</br>Redirecting...')
 			         setTimeout(function() {
-			          window.location.href = "/restaurant";
+			          window.location.href = "/";
 			         }, 4000);
 			          
 			      } else {
@@ -129,12 +122,10 @@
 			<!--END FACEBOOK SIGN IN -->
 
 
+			<p class="small text-muted">Note to users: This will only verify your email address. You can sign in with a different account associated with the same email address later.</p>
+			<p class="small text-muted">Github users: if your email address is not public, other accounts will not sync.</p>
 
 
 			<div id="result"></div>
-<!--
+
 		</div>
-
-
-	</body>
-</html>-->
