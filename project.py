@@ -374,7 +374,7 @@ def disconnect():
 def showPlaces():
   places = session.query(Place).order_by(Place.name)
   if 'username' not in login_session:
-    return render_template('publicplaces.html', places = places)
+    return render_template('places-public.html', places = places)
   else:
     return render_template('places.html', places = places)
 
@@ -472,7 +472,7 @@ def showPlace(place_id):
     o = session.query(Thing).filter_by(place_id = c.id).filter(Thing.kind_of_thing == 'Other Stuff').order_by(Thing.name).all()
     creator = getUserInfo(c.user_id)
     if 'username' not in login_session or creator.id != login_session['user_id']:
-      return render_template('publicthings.html', place=c, people=p, plants=l, animals=a, machines=m, other=o, creator = creator)
+      return render_template('things-public.html', place=c, people=p, plants=l, animals=a, machines=m, other=o, creator = creator)
     else:
       return render_template('things.html', place=c, people=p, plants=l, animals=a, machines=m, other=o, creator = creator)
 
