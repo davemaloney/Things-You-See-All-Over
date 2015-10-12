@@ -24,7 +24,11 @@ h1, h2, h3, h4, h5, h6 {
 	letter-spacing: .05em;
 }
 
-
+.things-header {
+    margin: 0 15px 1em;
+    background-size: cover;
+    background-position: center center;
+}
 .things-header h1 {
 	font-size:4em;
 	-webkit-text-stroke: 3px black;
@@ -35,6 +39,20 @@ h1, h2, h3, h4, h5, h6 {
 		1px -1px 0 #000,
 		-1px 1px 0 #000,
 		1px 1px 0 #000;
+}
+.things-header .creator img {
+    margin: 0 auto;
+    max-height: 15em;
+}
+
+.things-section + .things-section {
+    margin-top: 3em;
+}
+
+.things-section h2 {
+    font-size: 48px;
+    border-bottom: 3px solid;
+    margin-bottom: 1em;
 }
 
 /* For the Login Page GitHub button */

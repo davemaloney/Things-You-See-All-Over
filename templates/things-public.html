@@ -1,18 +1,18 @@
 {% extends "main.html" %}
 {% block content %}
-{% if place.image %}
-<div class="row things-header" style="background-image:url('{{ url_for('uploaded_image', filename = place.image)}}')">
-{% else %}
 <div class="row">
-{% endif %}
-	<div class="col-sm-10">
-			<h1>Things You See All Over<br>{{ place.name }}</h1>
-	</div>
-	<div class="col-sm-2">
+	<div class="things-header" style="background-image:url('{{ url_for('uploaded_image', filename = place.image)}}')">
+		<div class="col-sm-10">
+				<h1>Things You See All Over<br>{{ place.name }}</h1>
+		</div>
+		<div class="col-sm-2">
 			<figure class="creator text-center">
+				<figcaption>Created by:</figcaption>
 				<img class="img-responsive img-circle" alt="{{creator.name}}" src="{{creator.picture}}">
 				<figcaption>{{ creator.name }}</figcaption>
 			</figure>
+		</div>
+		<div class="clearfix"></div>
 	</div>
 </div>
 

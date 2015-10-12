@@ -60,7 +60,7 @@ class Thing(Base):
 			'name'          : self.name,
 			'id'            : self.id,
 			'description'   : self.description,
-			'kind_of_thing' : self.course,
+			'kind_of_thing' : self.kind_of_thing,
 		}
 
 engine = create_engine('sqlite:///thingsyouseeallover.db')
