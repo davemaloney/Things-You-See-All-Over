@@ -410,7 +410,16 @@ def newPlace():
   if 'username' not in login_session:
     return redirect('/login')
   if request.method == 'POST':
-    place = Place(name = request.form['name'], user_id=login_session['user_id'])
+    file = request.files['image']
+    if file and allowed_file(file.filename):
+      filename = secure_filename(file.filename)
+      file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+    else:
+      filename = 'placeholder.jpg'
+    place = Place(
+      name = request.form['name'], 
+      user_id = login_session['user_id'],
+      image = filename)
     session.add(place)
     flash("New place to see stuff: %s" % place.name)
     session.commit()
@@ -432,10 +441,18 @@ def editPlace(place_id):
   creator = getUserInfo(place.user_id)
   if creator.id == login_session['user_id']:
     if request.method == 'POST':
-        if request.form['name']:
-          place.name = request.form['name']
-          flash('%s successfully edited!' % place.name)
-          return redirect(url_for('showThings', place_id=place_id))
+      if request.form['name']:
+        place.name = request.form['name']
+      if request.files['image']:
+        file = request.files['image']
+        if file and allowed_file(file.filename):
+          filename = secure_filename(file.filename)
+          file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        place.image = filename      
+      session.add(place)
+      session.commit()
+      flash('%s successfully edited!' % place.name)
+      return redirect(url_for('showThings', place_id=place_id))
     else:
       return render_template('editplace.html', place = place)
   else:
@@ -490,7 +507,7 @@ def showThings(place_id):
     l = session.query(Thing).filter_by(place_id = c.id).filter(Thing.kind_of_thing == 'Plants').order_by(Thing.name).all()
     a = session.query(Thing).filter_by(place_id = c.id).filter(Thing.kind_of_thing == 'Animals').order_by(Thing.name).all()
     m = session.query(Thing).filter_by(place_id = c.id).filter(Thing.kind_of_thing == 'Machines').order_by(Thing.name).all()
-    o = session.query(Thing).filter_by(place_id = c.id).filter(Thing.kind_of_thing == 'Other Stuff').order_by(Thing.name).all()
+    o = session.query(Thing).filter_by(place_id = c.id).filter(Thing.kind_of_thing == 'Other').order_by(Thing.name).all()
     creator = getUserInfo(c.user_id)
     if 'username' not in login_session or creator.id != login_session['user_id']:
       return render_template('things-public.html', place=c, people=p, plants=l, animals=a, machines=m, other=o, creator=creator)
@@ -512,6 +529,8 @@ def newThing(place_id):
       if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+      else:
+        filename = 'placeholder.jpg'
       t = Thing(
         name = request.form['name'], 
         description = request.form['description'], 

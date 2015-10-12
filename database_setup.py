@@ -28,6 +28,7 @@ class Place(Base):
 
 	name = Column(String(250), nullable=False)
 	id = Column(Integer, primary_key=True)
+	image = Column(String(250))
 	user_id = Column(Integer,ForeignKey('user.id'))
 	user = relationship(User)
 
