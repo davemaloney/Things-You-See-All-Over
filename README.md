@@ -7,8 +7,4 @@ Now that you have Vagrant up and running type **vagrant ssh** to log into your V
 
 Type **ls** to ensure that you are inside the directory that contains project.py, database_setup.py, and three directories named 'static' 'templates' and 'uploads'
 
-Now type **python database_setup.py** to initialize the database.
-
-Type **python lotsofmenus.py** to populate the database with restaurants and menu items. (Optional)
-
-Type **python project.py** to run the Flask web server. In your browser visit **http://localhost:5000** to view the restaurant menu app.  You should be able to view, add, edit, and delete menu items and restaurants.
+Type **python project.py** to run the Flask web server. In your browser visit **http://localhost:5000** to view the app.  You should be able to view, add, edit, and delete places and things you see all over those places.
