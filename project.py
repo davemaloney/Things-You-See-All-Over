@@ -94,7 +94,7 @@ def placesJSON():
 def showLogin():
     state = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in xrange(32))
     login_session['state'] = state
-    return render_template('login.html', STATE=state)
+    return render_template('components/login/index.html', STATE=state)
 
 ###############################################################################
 #
@@ -109,10 +109,10 @@ def ghcallback():
     code = request.args.get('code')
 
     # Get the client_id and client_secret from the client secrets JSON
-    client_id = json.loads(open('client_secrets_github.json', 'r').read())[
+    client_id = json.loads(open('client_secrets/github.json', 'r').read())[
         'web']['client_id']
     client_secret = json.loads(
-        open('client_secrets_github.json', 'r').read())['web']['client_secret']
+        open('client_secrets/github.json', 'r').read())['web']['client_secret']
 
     # Get the state from url, confirm match with login state or abort
     if request.args.get('state') != login_session['state']:
@@ -128,7 +128,7 @@ def ghcallback():
     # Read 'result' JSON, store the access_token to the login_session
     data = json.loads(result)
     login_session['provider'] = 'github'
-    login_session['access_token'] = data["access_token"]
+    login_session['access_token'] = data['access_token']
 
     # Trade the access_token for the user data, store the response as 'userdata'
     url = 'https://api.github.com/user?access_token=%s' % (login_session['access_token'])
@@ -171,10 +171,10 @@ def fbconnect():
     access_token = request.data
 
     # Get the app_id and app_secret from the client secrets JSON
-    app_id = json.loads(open('client_secrets_facebook.json', 'r').read())[
+    app_id = json.loads(open('client_secrets/facebook.json', 'r').read())[
         'web']['app_id']
     app_secret = json.loads(
-        open('client_secrets_facebook.json', 'r').read())['web']['app_secret']
+        open('client_secrets/facebook.json', 'r').read())['web']['app_secret']
 
     # Send the app_id, app_secret, and access_token to Facebook, store the response as 'result'
     url = 'https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&client_id=%s&client_secret=%s&fb_exchange_token=%s' % (
@@ -255,7 +255,7 @@ def gconnect():
     code = request.data
     try:
         # Upgrade the authorization code into a credentials object
-        oauth_flow = flow_from_clientsecrets('client_secrets_google.json', scope='')
+        oauth_flow = flow_from_clientsecrets('client_secrets/google.json', scope='')
         oauth_flow.redirect_uri = 'postmessage'
         credentials = oauth_flow.step2_exchange(code)
     except FlowExchangeError:
@@ -265,7 +265,7 @@ def gconnect():
         return response
 
     CLIENT_ID = json.loads(
-        open('client_secrets_google.json', 'r').read())['web']['client_id']
+        open('client_secrets/google.json', 'r').read())['web']['client_id']
 
     # Check that the access token is valid
     access_token = credentials.access_token
@@ -408,9 +408,9 @@ def disconnect():
 def showPlaces():
     places = session.query(Place).order_by(Place.name)
     if 'username' not in login_session:
-        return render_template('places-public.html', places=places)
+        return render_template('places/public.html', places=places)
     else:
-        return render_template('places.html', places=places)
+        return render_template('places/index.html', places=places)
 
 ###############################################################################
 #
@@ -439,7 +439,7 @@ def newPlace():
         session.commit()
         return redirect(url_for('showPlaces'))
     else:
-        return render_template('newplace.html')
+        return render_template('places/new.html')
 
 ###############################################################################
 #
@@ -469,7 +469,7 @@ def editPlace(place_id):
       flash('%s successfully edited!' % place.name)
       return redirect(url_for('showThings', place_id=place_id))
     else:
-      return render_template('editplace.html', place=place)
+      return render_template('places/edit.html', place=place)
   else:
     message = Markup("You don&rsquo;t have permissions to edit %s" % place.name)
     flash(message)
@@ -497,7 +497,7 @@ def deletePlace(place_id):
     session.commit()
     return redirect(url_for('showPlaces'))
   else:
-    return render_template('deleteplace.html', place=place)
+    return render_template('places/delete.html', place=place)
 
 ###############################################################################
 ###############################################################################
@@ -527,9 +527,9 @@ def showThings(place_id):
     o = session.query(Thing).filter_by(place_id=c.id).filter(Thing.kind_of_thing == 'Other').order_by(Thing.name).all()
     creator = getUserInfo(c.user_id)
     if 'username' not in login_session or creator.id != login_session['user_id']:
-      return render_template('things-public.html', place=c, people=p, plants=l, animals=a, machines=m, other=o, creator=creator)
+      return render_template('things/public.html', place=c, people=p, plants=l, animals=a, machines=m, other=o, creator=creator)
     else:
-      return render_template('things.html', place=c, people=p, plants=l, animals=a, machines=m, other=o, creator=creator)
+      return render_template('things/index.html', place=c, people=p, plants=l, animals=a, machines=m, other=o, creator=creator)
 
 ###############################################################################
 #
@@ -561,7 +561,7 @@ def newThing(place_id):
       flash("It's something you see all over: %s" % (t.name))
       return redirect(url_for('showThings', place_id=place_id))
   else:
-      return render_template('newthing.html', place_id=place_id)
+      return render_template('things/new.html', place_id=place_id)
 
 ###############################################################################
 #
@@ -593,7 +593,7 @@ def editThing(place_id, thing_id):
     flash("%s edited successfully!" % t.name)
     return redirect(url_for('showThings', place_id=place_id))
   else:
-    return render_template('editthing.html', place_id=place_id, thing_id=thing_id, item=t)
+    return render_template('things/edit.html', place_id=place_id, thing_id=thing_id, item=t)
 
 ###############################################################################
 #
@@ -613,7 +613,7 @@ def deleteThing(place_id, thing_id):
     flash('%s deleted successfully' % t.name)
     return redirect(url_for('showThings', place_id=place_id))
   else:
-    return render_template('deletething.html', place_id=place_id, item=t)
+    return render_template('things/delete.html', place_id=place_id, item=t)
 
 
 ###############################################################################
@@ -662,4 +662,4 @@ def createUser(login_session):
 if __name__ == '__main__':
   app.secret_key = '\xe1\xad\xdf\xc2\xa66\xde\xc8\xdb\x0f\x05\xac\x89\x06\xb0\x8d&\xa0Z\xe1\xb8\xbc-\xf6'
   app.debug = True
-  app.run(host='0.0.0.0', port=5000)
+  app.run(host='0.0.0.0', port=8000)
