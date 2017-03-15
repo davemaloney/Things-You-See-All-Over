@@ -1,6 +1,6 @@
 # Things You See All Over
 
-Base assumption that you're using Vagrant or some other VM.
+Base assumption that you're using Vagrant or some other VM forwarding to port 8000.
 
 ## Get virtual box up and running
 Assuming vagrant, once it is up and running (`vagrant up`), type `vagrant ssh` to log your terminal into the virtual machine, and you'll get a Linux shell prompt. 
@@ -13,9 +13,18 @@ Change to the `/vagrant` directory by typing `cd /vagrant`. This will take you t
 Type `ls` to ensure that you are inside the directory that contains 
 ```
 catalog
+├── client_secrets/       # Expected to contain files from Facebook, Google, and GitHub
 ├── static/
+│   ├── css/
+│   ├── fonts/
+│   └── js/
 ├── templates/
+│   ├── components/
+│   ├── places/
+│   ├── things/
+│   └── main.html
 ├── uploads/
+├── .gitignore
 ├── database_setup.py
 ├── pg_config.sh
 ├── project.py
@@ -23,7 +32,7 @@ catalog
 ```
 + Run `sh pg_config.sh` to ensure dependencies
 + Run `python project.py` to run the Flask web server 
-+ In your browser visit [http://localhost:5000]() to view the app.
++ In your browser visit [http://localhost:8000]() to view the app.
 
 ## Use the App
 You should be able to view, add, edit, and delete places and things you see all over those places.
