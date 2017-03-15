@@ -1,0 +1,42 @@
+<script src="https://apis.google.com/js/client:platform.js?onload=start" async defer></script>
+<!-- Google Plus login button -->
+<div id="signinButton">
+  <span class="g-signin"
+    data-scope="openid email"
+    data-clientid="746958938040-vgft85ec17d2vhbgrpp0er0uigkntv4t.apps.googleusercontent.com"
+    data-redirecturi="postmessage"
+    data-accesstype="offline"
+    data-cookiepolicy="single_host_origin"
+    data-callback="signInCallback"
+    data-approvalprompt="force">
+  </span>
+</div>
+<script type="text/javascript">
+  function signInCallback(authResult) {
+    if (authResult['code']) {
+      // Hide the signin button when the user is already authorized
+      $('#signinButton').hide();
+      // Send one-time-use code to server; if server responds, write success message, then redirect to main page
+      $.ajax({
+        type: 'POST',
+        url: '/gconnect?state={{STATE}}',
+        processData: false,
+        contentType: 'application/octet-stream; charset=utf-8',
+        data: authResult['code'],
+        success: function(result) {
+          // Handle successful response, log error, or say there was no response
+          if (result) {
+            $('#result').html('Login Successful!</br>'+ result + '</br> Redirecting . . .')
+            setTimeout(function() {
+              window.location.href = "/";
+            }, 4000);
+          } else if (authResult['error']) {
+            console.log('There was an error: ' + authResult['error']);
+          } else {
+            $('#result').html('Failed to make a server-side call. Check your configuration and console.');
+          }
+        }
+      });
+    }
+  }
+</script>

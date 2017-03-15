@@ -1,0 +1,12 @@
+<!-- GitHub login button -->
+<p>
+  <a class="btn btn-dark" href='javascript:gitHubSignIn()'><i class="fa fa-github fa-lg"></i> Login with GitHub</a>
+</p>
+<script type="text/javascript">
+  function gitHubSignIn() {
+    var client_id = 'b225641d071341dc3e8b';
+    // var redirect_uri = 'http://localhost:8000/ghcallback';
+    var url = 'https://github.com/login/oauth/authorize?client_id=' + client_id + '&state={{STATE}}&redirect_uri=';// + redirect_uri;
+    window.location = url
+  }
+</script>

@@ -1,0 +1,12 @@
+<div class="modal fade newEditDeleteModal" tabindex="-1" role="dialog" aria-labelledby="newEditDeleteModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+    </div>
+  </div>
+</div>
+<script type="text/javascript">
+  $('.newEditDeleteModal').on('hide.bs.modal', function (event) {
+    $(this).removeData('bs.modal')
+  })
+</script>

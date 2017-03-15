@@ -1,0 +1,20 @@
+<div class="modal-header">
+	<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+	<h4 class="modal-title" id="myModalLabel">Login to Add Places and Edit Things</h4>
+</div>
+
+<div class="modal-body">
+	<div class="text-center">
+		<h2>Sign in with your preferred account</h2>
+
+		{% include "components/login/google.html" %}
+		{% include "components/login/github.html" %}
+		{% include "components/login/facebook.html" %}
+
+		<p class="small text-muted">Note to users: This will only verify your email address. You can sign in with a different account associated with the same email address later.</p>
+		<p class="small text-muted">Github users: if your email address is not public, other accounts will not sync.</p>
+
+		<div id="result"></div>
+
+	</div>
+</div>
